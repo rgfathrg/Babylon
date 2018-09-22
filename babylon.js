@@ -37,7 +37,7 @@ function inquiry() {
                 name: "quantity",
                 message: "How many items would you like?"
             }
-        ]).then(function pChoice(choice) {
+        ]).then(function (choice) {
             var choiceId = choice.id_choice;
             var quantity = choice.quantity;
             connection.query("SELECT product_name, stock_quantity, price FROM products WHERE item_id = " + choiceId, function (err, res) {
@@ -47,33 +47,46 @@ function inquiry() {
                 console.log(res[0].stock_quantity);
                 var newQuantity = res[0].stock_quantity - quantity;
                 var purchasePrice = res[0].price * quantity;
-                if (newQuantity > 0) {
-                    console.log("Your order was successful!");
-                    console.log("Your order total is: $" + purchasePrice);
-                    connection.query("UPDATE products SET ? WHERE item_id = " + choiceId,
-                        [
-                            {
-                                stock_quantity: newQuantity
-                            }
-                        ]
-                    );
-                    connection.end();
-                }
-                else if (newQuantity === 0){
-                    console.log("Your order was succesful!");
-                    console.log("Your order total is: " + purchasePrice);
-                    connection.query("DELETE FROM products WHERE item_id = $" + choiceId);
-                    console.log("This item is now out of stock!");
-                    connection.end();
+                if (res[0].stock_quantity > 0) {
+                    if (newQuantity > 0) {
+                        console.log("Your order was successful!");
+                        console.log("Your order total is: $" + purchasePrice);
+                        connection.query("UPDATE products SET ? WHERE item_id = " + choiceId,
+                            [
+                                {
+                                    stock_quantity: newQuantity,
+                                    product_sales: purchasePrice
+                                }
+                            ]
+                        );
+                        connection.end();
+                    }
+                    else if (newQuantity === 0) {
+                        console.log("Your order was succesful!");
+                        console.log("Your order total is: " + purchasePrice);
+                        connection.query("UPDATE products SET ? WHERE item_id = " + choiceId,
+                            [
+                                {
+                                    stock_quantity: newQuantity,
+                                    product_sales: purchasePrice
+                                }
+                            ]
+                        );
+                        console.log("This item is now out of stock!");
+                        connection.end();
+                    }
+                    else {
+                        console.log("Your order quantity is too large.");
+                        showInventory();
+                    }
+                   
                 }
                 else {
-                    console.log("I'm sure order quantity is too large.");
-                    pChoice();
+                    console.log("Sorry this item is out of stock!");
+                    showInventory();
                 }
-                console.log(newQuantity);
             }
             )
-            console.log(choice.id_choice);
         })
 }
 
